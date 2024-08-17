@@ -1,35 +1,46 @@
-import random
+# This bot successfuly defeats quincy, mrugesh and kris consistently with more than 60% of win rate, however it barely defeat
+# abbey with that win rate, so if it fails try again so it defeat all bots with more than that win rate.
 
-def join(moves):
-    return "".join(moves)
+def player(prev_play, opponent_history = [], play_order = {}):
 
-def player(prev_play, opponent_history=[], steps = {}):
+    # Import necessary libraries
+    import heapq
+    import random
 
+    # Build ideal moves dictionary
     ideal_moves = {"R": "P", "P": "S", "S": "R"}
 
+    # Build oppenent history, we ignore the first element of the list because it is always ""
     if prev_play != "":
         opponent_history.append(prev_play)
-    
 
-    n = 5
-    hist = opponent_history
-    guess = random.choice(['R', 'P', 'S'])
+    # Define a window size to analyze opponents patterns
+    window_size = 6
 
-    if len(hist) > n:
-        pattern = join(hist[-n:])
-
-        if join(hist[-(n + 1):]) in steps.keys():
-            steps[join(hist[-(n + 1):])] += 1
+    # Analyze opponent patern when the history is larger than window size
+    if len(opponent_history) > window_size:
+        # Build opponent pattern
+        pattern = "".join(opponent_history[-window_size:])
+        # Update frequency opponent moves
+        if "".join(opponent_history[-(window_size + 1):]) in play_order.keys():
+            play_order["".join(opponent_history[-(window_size + 1):])] += 1
         else:
-            steps[join(hist[-(n + 1):])] = 1
+            play_order["".join(opponent_history[-(window_size + 1):])] = 1
 
-        possible = [pattern + "R", pattern + "P", pattern + "S"]
+        # Create a priority que for possible moves
+        possible_moves = []
+        for move in ['R', 'P', 'S']:
+            freq = play_order.get(pattern + move, 0)
+            # Insert element
+            heapq.heappush(possible_moves, (-freq, move))
 
-        for i in possible:
-            if not i in steps.keys():
-                steps[i] = 0
+        # Extract element
+        _, predict = heapq.heappop(possible_moves)
+        # Chosse more probable move
+        guess = ideal_moves[predict]
 
-        predict = max(possible, key = lambda key: steps[key])
-        guess = ideal_moves[predict[-1]]
+    else:
+    # Generate random moves when needed
+        guess = random.choice(['R', 'P', 'S'])
 
     return guess
